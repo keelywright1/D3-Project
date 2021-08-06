@@ -14,7 +14,7 @@ yText.append('text').text('Obese (%)').attr('class', 'aText y active').attr('dat
 yText.append('text').text('Smokes (%)').attr('class', 'aText y inactive').attr('data-id', 'smokes').attr('y', 20);
 yText.append('text').text('Lacks Healthcare (%)').attr('class', 'aText y inactive').attr('data-id', 'healthcare').attr('y', 40);
 
-var chart = svg.append('g').attr('transform',`translate(${.15*width},${.75*height})`)
+var chart = svg.append('g').attr('transform', `translate(${.15 * width},${.75 * height})`)
 var xScaleLoc = chart.append('g').transition().duration(2000);
 var yScaleLoc = chart.append('g').transition().duration(2000);
 
@@ -36,37 +36,38 @@ function handleClick() {
 function renderData() {
     var x = d3.selectAll('.x').filter('.active').attr('data-id');
     var y = d3.selectAll('.y').filter('.active').attr('data-id');
+
     
-    d3.csv('assets/data/data.csv').then(data=>{
+    d3.csv('assets/data/data.csv').then(data => {
         
         var xData = data.map(d => +d[x]);
         var yData = data.map(d => +d[y]);
-
-        var xScaler = d3.scaleLinear().range([0,.8*width]).domain([.9*d3.min(xData), 1.02 * d3.max(xData)]);
-        var yScaler = d3.scaleLinear().range([0, -.65*height]).domain([.9*d3.min(yData), 1.02 * d3.max(yData)]);
         
+        console.log(x,y);
+        
+        var xScaler = d3.scaleLinear().range([0, .8 * width]).domain([.9 * d3.min(xData), 1.02 * d3.max(xData)]);
+        var yScaler = d3.scaleLinear().range([0, -.65 * height]).domain([.9 * d3.min(yData), 1.02 * d3.max(yData)]);
+
         xScaleLoc.call(d3.axisBottom(xScaler));
-        yScaleLoc.call(d3.axisLeft(yScaler))
+        yScaleLoc.call(d3.axisLeft(yScaler));
+
+        var toolTip = d3.tip().attr('class', 'd3-tip').html(d => `<div>${d.abbr}</div><div>${x}: ${d[x]}</div><div>${y}: ${d[y]}</div>`)
 
         var circles = chart.selectAll('g').data(data).enter().append('g').on('mouseover', function (d) {
-            toolTip.show(d,this);
-            d3.select(this).style('stroke','#e3e3e3');
+            toolTip.show(d, this);
+            d3.select(this).style('stroke', 'black');
         }).on('mouseout', function (d) {
             toolTip.hide(d);
-            d3.select(this).style('stroke','#323232');
+            d3.select(this).style('stroke', '#fff');
         });
 
-        circles.append('circle').attr('r',.02*width).attr('class','stateCircle');
-        circles.append('text').attr('class','stateText');
+        circles.append('circle').attr('r', .02 * width).attr('class', 'stateCircle');
+        circles.append('text').attr('class', 'stateText');
 
-        showCircles();
+        d3.selectAll('.stateCircle').transition().duration(1000).attr('cx', d => xScaler(d[x])).attr('cy', d => yScaler(d[y]));
 
-        function showCircles() {
-            d3.selectAll('.stateCircle').transition().duration(1000).attr('cx', d => xScaler(d[x])).attr('cy', d => yScaler(d[y]));
+        d3.selectAll('.stateText').transition().duration(1000).attr('dx', d => xScaler(d[x])).attr('dy', d => yScaler(d[y] - .4)).text(d => d.abbr);
 
-            d3.selectAll('.stateText').transition().duration(1000).attr('dx', d=> xScaler(d[x])).attr('dy',d=>yScaler(d[y]-.4)).text(d=>d.abbr);
-        }
-
-
-   }) 
+        circles.call(toolTip);
+    });
 };
